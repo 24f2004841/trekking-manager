@@ -43,6 +43,10 @@ def create_app(config_class=Config):
 
     init_db(app)
 
+    from routes.auth.login import auth_bp
+
+    app.register_blueprint(auth_bp)
+
     @app.get("/api/health")
     def health():
         return jsonify(status="ok")
