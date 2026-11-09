@@ -86,7 +86,9 @@ async function submit() {
             </button>
             <p class="center muted">Don't have an account?</p>
             <p class="center">
-                <a href="#" @click.prevent>Register as User (Trekker)</a>
+                <router-link :to="{ name: 'register' }"
+                    >Register as User (Trekker)</router-link
+                >
             </p>
         </form>
 

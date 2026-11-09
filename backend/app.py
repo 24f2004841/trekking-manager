@@ -43,9 +43,19 @@ def create_app(config_class=Config):
 
     init_db(app)
 
+    from routes.admin.bookings import bookings_bp
+    from routes.admin.dashboard import dashboard_bp
+    from routes.admin.people import people_bp
+    from routes.admin.treks import treks_bp
     from routes.auth.login import auth_bp
+    from routes.auth.register import register_bp
 
     app.register_blueprint(auth_bp)
+    app.register_blueprint(register_bp)
+    app.register_blueprint(dashboard_bp)
+    app.register_blueprint(treks_bp)
+    app.register_blueprint(people_bp)
+    app.register_blueprint(bookings_bp)
 
     @app.get("/api/health")
     def health():

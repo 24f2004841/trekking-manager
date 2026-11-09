@@ -43,6 +43,9 @@ class User(db.Model):
 
     roles = db.Column(db.String(10), nullable=False)
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     # Relationships
     staff_profile = db.relationship(
         "StaffProfile",

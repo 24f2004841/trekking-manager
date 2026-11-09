@@ -1,9 +1,7 @@
-// API layer. The backend admin endpoints do not exist yet, so every function
-// below resolves mock data. Replace the bodies with `request(...)` calls
-// once the Flask routes are ready; views/components won't need to change.
+// API layer. Every function maps to a Flask endpoint; response fields follow
+// the database models (see backend/models.py).
 
 const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
-const delay = (v) => new Promise((r) => setTimeout(() => r(v), 150));
 
 // Registered in main.js: clears the session and sends the user to /login.
 let onUnauthorized = () => {};
@@ -28,148 +26,22 @@ async function request(
   return data;
 }
 
-// ---- mock data ----
-let treks = [
-  {
-    id: 1,
-    name: "Everest Base Camp",
-    location: "Nepal",
-    difficulty: "Hard",
-    slots: 10,
-    status: "Open",
-  },
-  {
-    id: 2,
-    name: "Roopkund Trek",
-    location: "Uttarakhand",
-    difficulty: "Moderate",
-    slots: 15,
-    status: "Open",
-  },
-  {
-    id: 3,
-    name: "Kedarkantha Trek",
-    location: "Uttarakhand",
-    difficulty: "Easy",
-    slots: 20,
-    status: "Closed",
-  },
-  {
-    id: 4,
-    name: "Hampta Pass",
-    location: "Himachal",
-    difficulty: "Moderate",
-    slots: 12,
-    status: "Open",
-  },
-];
-let staff = [
-  {
-    id: "TS001",
-    name: "Vikas Singh",
-    email: "vikas@gmail.com",
-    contact: "9876543210",
-    blacklisted: false,
-  },
-  {
-    id: "TS002",
-    name: "Neha Joshi",
-    email: "neha@gmail.com",
-    contact: "9123456780",
-    blacklisted: true,
-  },
-  {
-    id: "TS003",
-    name: "Arjun Mehta",
-    email: "arjun@gmail.com",
-    contact: "9986776655",
-    blacklisted: false,
-  },
-  {
-    id: "TS004",
-    name: "Pooja Rawat",
-    email: "pooja@gmail.com",
-    contact: "9012345678",
-    blacklisted: false,
-  },
-  {
-    id: "TS005",
-    name: "Rahim Khan",
-    email: "rahim@gmail.com",
-    contact: "9871122334",
-    blacklisted: true,
-  },
-];
-let users = [
-  {
-    id: "U001",
-    name: "Amit Sharma",
-    email: "amit@gmail.com",
-    contact: "9876543210",
-    blacklisted: false,
-  },
-  {
-    id: "U002",
-    name: "Priya Patel",
-    email: "priya@gmail.com",
-    contact: "9123456780",
-    blacklisted: false,
-  },
-  {
-    id: "U003",
-    name: "Rahul Verma",
-    email: "rahul@gmail.com",
-    contact: "9986776655",
-    blacklisted: true,
-  },
-  {
-    id: "U004",
-    name: "Sneha Iyer",
-    email: "sneha@gmail.com",
-    contact: "9123898765",
-    blacklisted: false,
-  },
-  {
-    id: "U005",
-    name: "Karan Tiwari",
-    email: "karan@gmail.com",
-    contact: "9871234567",
-    blacklisted: false,
-  },
-];
-const bookings = [
-  {
-    id: "B001",
-    user: "Amit Sharma",
-    trek: "Everest Base Camp",
-    date: "12 May 2026",
-    status: "Booked",
-  },
-  {
-    id: "B002",
-    user: "Priya Patel",
-    trek: "Roopkund Trek",
-    date: "11 May 2026",
-    status: "Booked",
-  },
-  {
-    id: "B003",
-    user: "Rahul Verma",
-    trek: "Kedarkantha Trek",
-    date: "10 May 2026",
-    status: "Cancelled",
-  },
-];
-
-const matches = (obj, q) =>
-  !q || Object.values(obj).join(" ").toLowerCase().includes(q.toLowerCase());
+const withQuery = (path, q) =>
+  q ? `${path}?${new URLSearchParams({ q })}` : path;
 
 export const api = {
-  // Real endpoints
+  // ---- auth ----
   login({ email, password, role }) {
     return request("/auth/login", {
       method: "POST",
       body: { email, password, role },
+      skipAuthRedirect: true,
+    });
+  },
+  register({ email, password, name, username, contact }) {
+    return request("/auth/register", {
+      method: "POST",
+      body: { email, password, name, username, contact },
       skipAuthRedirect: true,
     });
   },
@@ -178,54 +50,45 @@ export const api = {
     return request("/auth/me", { skipAuthRedirect: true });
   },
 
-  // ---- everything below is still mocked ----
+  // ---- admin ----
+  getDashboard() {
+    return request("/admin/dashboard");
+  },
 
-  async getDashboard() {
-    return delay({
-      totals: { treks: 25, users: 120, staff: 18, bookings: 185 },
-      recentBookings: bookings,
+  getTreks(q = "") {
+    return request(withQuery("/admin/treks", q));
+  },
+  deleteTrek(id) {
+    return request(`/admin/treks/${id}`, { method: "DELETE" });
+  },
+
+  getStaff(q = "") {
+    return request(withQuery("/admin/staff", q));
+  },
+  createStaff({ name, email, contact, password, experience, status }) {
+    return request("/admin/staff", {
+      method: "POST",
+      body: { name, email, contact, password, experience, status },
+    });
+  },
+  setStaffBlacklist(id, blacklisted) {
+    return request(`/admin/staff/${id}/blacklist`, {
+      method: "PATCH",
+      body: { blacklisted },
     });
   },
 
-  async getTreks(q = "") {
-    return delay(treks.filter((t) => matches(t, q)));
+  getUsers(q = "") {
+    return request(withQuery("/admin/users", q));
   },
-  async deleteTrek(id) {
-    treks = treks.filter((t) => t.id !== id);
-    return delay(true);
-  },
-
-  async getStaff(q = "") {
-    return delay(staff.filter((s) => matches(s, q)));
-  },
-  async createStaff(payload) {
-    const id = "TS" + String(staff.length + 1).padStart(3, "0");
-    staff = [
-      ...staff,
-      {
-        id,
-        name: payload.name,
-        email: payload.email,
-        contact: payload.contact,
-        blacklisted: false,
-      },
-    ];
-    return delay({ id });
-  },
-  async setStaffBlacklist(id, blacklisted) {
-    staff = staff.map((s) => (s.id === id ? { ...s, blacklisted } : s));
-    return delay(true);
+  setUserBlacklist(id, blacklisted) {
+    return request(`/admin/users/${id}/blacklist`, {
+      method: "PATCH",
+      body: { blacklisted },
+    });
   },
 
-  async getUsers(q = "") {
-    return delay(users.filter((u) => matches(u, q)));
-  },
-  async setUserBlacklist(id, blacklisted) {
-    users = users.map((u) => (u.id === id ? { ...u, blacklisted } : u));
-    return delay(true);
-  },
-
-  async getBookings() {
-    return delay(bookings);
+  getBookings() {
+    return request("/admin/bookings");
   },
 };

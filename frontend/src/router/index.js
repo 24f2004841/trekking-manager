@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import { auth, homeRouteFor } from "../stores/auth";
 
 import LoginView from "../views/LoginView.vue";
+import RegisterView from "../views/RegisterView.vue";
 
 import AdminLayout from "../layouts/AdminLayout.vue";
 import AdminDashboard from "../views/admin/AdminDashboardView.vue";
@@ -17,6 +18,11 @@ const routes = [
     path: "/login",
     name: "login",
     component: () => LoginView,
+  },
+  {
+    path: "/register",
+    name: "register",
+    component: () => RegisterView,
   },
   {
     path: "/admin",
@@ -78,7 +84,7 @@ router.beforeEach(async (to) => {
   if (needsAuth && !auth.isLoggedIn) return { name: "login" };
   if (requiredRole && auth.role !== requiredRole) return { name: "login" };
   // Valid session on the login page: go straight to the role's home.
-  if (to.name === "login" && auth.isLoggedIn) {
+  if ((to.name === "login" || to.name === "register") && auth.isLoggedIn) {
     const home = homeRouteFor(auth.role);
     if (home.name !== "login") return home;
   }

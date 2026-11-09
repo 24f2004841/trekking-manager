@@ -33,8 +33,12 @@ def login():
         return jsonify(message="This account has been disabled"), 403
 
     # The role comes from the database; the selected tab must match it.
-    if requested_role and requested_role != user.roles:
-        return jsonify(message="Invalid email or password"), 401
+    if requested_role:
+        role_matches = requested_role == user.roles or (
+            requested_role in ("user", "trekker") and user.roles in ("user", "trekker")
+        )
+        if not role_matches:
+            return jsonify(message="Invalid email or password"), 401
 
     token = create_access_token(
         identity=user.id,
